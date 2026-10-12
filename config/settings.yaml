@@ -19,19 +19,21 @@ apis:
     max_tokens: 4096
     temperature: 0.9
 
-  # Pollinations.ai — 100% FREE, no key needed (primary)
+  # Pollinations.ai — 100% FREE, no key needed (fallback, no key required)
   pollinations:
     model: "flux"
     width: 1024
     height: 1024
 
-  # Cloudflare Workers AI — free tier (10,000 neurons/day), reliable
+  # Cloudflare Workers AI — PRIMARY (free 10,000 neurons/day, best quality)
+  # NOTE: SDXL-Lightning supports max 8 steps; quality comes from
+  # guidance 3.5 + stronger line-art prompts, not num_steps.
   cloudflare:
     model: "@cf/bytedance/stable-diffusion-xl-lightning"
     width: 1024
     height: 1024
     num_steps: 8
-    guidance: 7.5
+    guidance: 3.5
 
   # NVIDIA NIM — free tier with API key (needs function enabled on account)
   nvidia:
@@ -55,41 +57,43 @@ apis:
 
 # ── Image Generation Pipeline ────────────────────────────
 generation:
-  # Order of image providers (primary → fallback → fallback)
-  # Pollinations (free, no key) → Cloudflare (free 10k neurons/day) → HuggingFace
+  # Order of image providers (primary → fallbacks)
+  # CURRENTLY: only Cloudflare is active.
+  # Pollinations / NVIDIA / HuggingFace code + config are KEPT for future
+  # (uncomment to re-enable as fallback if they offer a good image model).
   provider_priority:
-    - "pollinations"
     - "cloudflare"
-    - "huggingface"
+    # - "pollinations"
+    # - "nvidia"
+    # - "huggingface"
   max_retries: 3                # Retries per image
   retry_delay: 5                # Seconds between retries
-  batch_size: 10                # Process in batches (progress logging)
-  concurrent: 2                 # Parallel API calls (avoid rate limits)
 
 # ── Prompt Strategy ──────────────────────────────────────
 prompts:
   # Negative prompts appended to every page prompt
-  negative_prompt: "color, shading, gradient, photorealistic, 3d, complex, blurry, low quality, watermark, text, letters, words"
+  negative_prompt: "color, colours, colored, shading, gradient, shadow, photorealistic, photo, 3d render, cgi, painting, watercolor, sketchy, pencil sketch, messy lines, broken lines, thin lines, faint lines, complex background, cluttered, blurry, low quality, watermark, text, letters, words, signature, grey fill, grey wash, dark background"
   # Style suffix for coloring pages (black & white line art)
-  page_style_suffix: "clean black and white line art, bold thick outlines, pure white background, simple vector style, kids coloring book page, no shading, no color, high contrast, minimal detail"
+  page_style_suffix: "children's coloring book page, simple bold black line art on pure white background, thick uniform outlines 3-5px, single centered subject, minimal geometric background shapes, large open white areas to color, flat 2D cartoon, no shading, no crosshatching, no gradients, no grey tones, no color"
   # Style suffix for cover page
-  cover_style_suffix: "kids coloring book cover illustration, bold black outlines, decorative border frame, white background, line art, no color, kid-friendly, cheerful"
+  cover_style_suffix: "children's coloring book cover, simple bold black line art on pure white background, thick uniform outlines 3-5px, one large centered illustration, decorative rectangular border frame, minimal background shapes, large open white areas to color, flat 2D cartoon, no shading, no gradients, no grey tones, no color, kid-friendly, cheerful"
 
 # ── Post-Processing ──────────────────────────────────────
+# NOTE: SDXL-Lightning already returns line art; threshold too aggressive
+# hota hai (detail kha jata hai) isliye default OFF — sirf soft contrast +
+# sharpen + A4 resize hota hai. Agar model grey/shaded image de to
+# clean_background: true kar do.
 processing:
-  resize_to_a4: true
   enhance_contrast: true
-  contrast_factor: 1.5
+  contrast_factor: 1.2
   sharpen: true
-  convert_to_grayscale: true
-  # Line art enhancement via OpenCV
-  apply_canny: true
-  canny_threshold1: 50
-  canny_threshold2: 150
-  canny_blur_kernel: 3
-  # Dilate lines for cleaner print
-  dilate_lines: true
-  dilate_kernel_size: 1
+  # Optional: grey wash hatane ke liye adaptive threshold (default OFF)
+  clean_background: false
+  threshold_block_size: 71
+  threshold_c: 10
+  # Optional: patli lines moti karne ke liye (default OFF)
+  dilate_lines: false
+  dilate_kernel_size: 2
 
 # ── Output Paths ─────────────────────────────────────────
 paths:

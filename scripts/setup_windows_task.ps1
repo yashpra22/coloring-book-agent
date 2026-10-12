@@ -1,9 +1,14 @@
 # ═══════════════════════════════════════════════════════════
 #  Windows Task Scheduler Setup Script
-#  Run this in PowerShell as Administrator
+#  Run this in PowerShell as Administrator:
+#    powershell -ExecutionPolicy Bypass -File scripts/setup_windows_task.ps1
 # ═══════════════════════════════════════════════════════════
 
-$ProjectDir = "c:\Users\titangrey\Desktop\Image generator\coloring-book-agent"
+$ProjectDir = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+if (-not (Test-Path (Join-Path $ProjectDir "main.py"))) {
+    # Fallback: assume script lives in <project>/scripts/
+    $ProjectDir = Split-Path -Parent $PSScriptRoot
+}
 $TaskName = "DailyColoringBook"
 $PythonExe = (Get-Command python).Source
 

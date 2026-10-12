@@ -1,4 +1,8 @@
-"""Process Agent - Converts raw images to clean line art for coloring."""
+"""Process Agent - Prepares Cloudflare line art for print (A4 @ 300 DPI).
+
+Default: soft contrast + sharpen + A4 resize (raw line art untouched).
+Optional: clean_background=true (adaptive threshold) + dilate_lines=true.
+"""
 import os
 import cv2
 import numpy as np
@@ -20,15 +24,18 @@ class ProcessAgent:
         self.a4_height = int(297 * self.dpi / 25.4)
         self.margin_px = int(self.margin_mm * self.dpi / 25.4)
 
-    def _apply_canny(self, img_array):
-        cfg = self.proc_config
-        blur = cv2.GaussianBlur(img_array, (cfg["canny_blur_kernel"], cfg["canny_blur_kernel"]), 0)
-        edges = cv2.Canny(blur, cfg["canny_threshold1"], cfg["canny_threshold2"])
-        return cv2.bitwise_not(edges)
-
     def _threshold(self, img_array):
-        _, thresh = cv2.threshold(img_array, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        return thresh
+        # Adaptive threshold handles uneven AI shading better than Otsu.
+        # Block size / C config se aate hain (processing.threshold_*).
+        block = int(self.proc_config.get("threshold_block_size", 71))
+        if block % 2 == 0:
+            block += 1
+        c_val = int(self.proc_config.get("threshold_c", 10))
+        return cv2.adaptiveThreshold(
+            img_array, 255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY, block, c_val,
+        )
 
     def _dilate_lines(self, img_array):
         if not self.proc_config["dilate_lines"]:
@@ -60,15 +67,13 @@ class ProcessAgent:
             img_array = np.array(img)
             cfg = self.proc_config
 
-            if cfg.get("apply_canny", True):
-                processed = self._apply_canny(img_array)
-            else:
+            if cfg.get("clean_background", False):
                 processed = self._threshold(img_array)
-
-            if cfg.get("dilate_lines", True):
-                processed = self._dilate_lines(processed)
-
-            line_art = Image.fromarray(processed)
+                if cfg.get("dilate_lines", False):
+                    processed = self._dilate_lines(processed)
+                line_art = Image.fromarray(processed)
+            else:
+                line_art = Image.fromarray(img_array)
 
             if cfg.get("enhance_contrast", True):
                 enhancer = ImageEnhance.Contrast(line_art)

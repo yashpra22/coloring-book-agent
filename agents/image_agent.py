@@ -1,4 +1,10 @@
-"""Image Agent - Generates coloring book images using free APIs."""
+"""Image Agent - Generates coloring book images using free APIs.
+
+Provider priority is configured in config/settings.yaml
+(generation.provider_priority). Currently ONLY Cloudflare is active;
+Pollinations / NVIDIA / HuggingFace functions + config are KEPT for
+future use (re-enable via provider_priority).
+"""
 import os
 import time
 import base64
@@ -16,24 +22,6 @@ class ImageAgent:
         self.providers = config["apis"]
         self.gen_config = config["generation"]
         self.raw_dir = config["paths"]["output_raw"]
-
-    def _download(self, url, save_path, timeout=120):
-        try:
-            resp = requests.get(url, timeout=timeout, stream=True)
-            if not resp.ok:
-                logger.error("Download failed HTTP {}: {}".format(
-                    resp.status_code,
-                    sanitize_for_log(resp.text),
-                ))
-                return False
-            Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-            with open(save_path, "wb") as f:
-                for chunk in resp.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            return os.path.getsize(save_path) > 1000
-        except Exception as e:
-            logger.error("Download failed: {}".format(e))
-            return False
 
     def _generate_nvidia(self, prompt, save_path):
         api_key = self.env.get("NVIDIA_API_KEY", "")
@@ -174,7 +162,8 @@ class ImageAgent:
             "height": cfg.get("height", 1024),
             "width": cfg.get("width", 1024),
             "num_steps": cfg.get("num_steps", 8),
-            "guidance": cfg.get("guidance", 7.5),
+            "guidance": cfg.get("guidance", 3.5),
+            "seed": int(time.time() * 1000) % 1000000,
         }
         try:
             resp = requests.post(url, headers=headers, json=payload, timeout=120)

@@ -31,19 +31,21 @@ jobs:
           sudo apt-get install -y libgl1 libglib2.0-0 || sudo apt-get install -y libgl1-mesa-glx libglib2.0-0 || echo "System deps optional, continuing..."
 
       - name: Install Python dependencies
-        run: pip install -r coloring-book-agent/requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Create .env file
-        working-directory: coloring-book-agent
         run: |
           echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" > .env
+          echo "CLOUDFLARE_ACCOUNT_ID=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" >> .env
+          echo "CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}" >> .env
           echo "NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}" >> .env
           echo "HF_TOKEN=${{ secrets.HF_TOKEN }}" >> .env
 
       - name: Generate Coloring Book
-        working-directory: coloring-book-agent
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: python main.py
@@ -52,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coloring-book-${{ github.run_number }}
-          path: coloring-book-agent/output/books/*.pdf
+          path: output/books/*.pdf
           retention-days: 90
 
       - name: Commit PDF to repository
@@ -60,7 +62,7 @@ jobs:
         run: |
           git config --local user.email "agent@coloringbook.ai"
           git config --local user.name "Coloring Book Agent"
-          git add coloring-book-agent/output/books/
-          git add coloring-book-agent/output/prompts/
+          git add output/books/
+          git add output/prompts/
           git commit -m "📚 Auto-generated coloring book — $(date +%Y-%m-%d)" || echo "Nothing to commit"
           git push || echo "Nothing to push"
