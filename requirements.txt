@@ -1,0 +1,17 @@
+# ── Core ──
+requests>=2.31
+python-dotenv>=1.0
+pyyaml>=6.0
+tqdm>=4.66
+
+# ── Image processing ──
+pillow>=10.0
+numpy>=1.24
+opencv-python>=4.8
+
+# ── PDF ──
+fpdf2>=2.7
+
+# ── Utilities ──
+loguru>=0.7
+tenacity>=8.2

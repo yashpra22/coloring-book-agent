@@ -1,0 +1,105 @@
+# ═══════════════════════════════════════════════════════════
+#  Daily Coloring Book Agent - Configuration
+# ═══════════════════════════════════════════════════════════
+
+book:
+  pages: 100                    # Number of coloring pages (excludes cover)
+  include_cover: true           # Generate a cover page
+  page_size: "A4"               # A4 = 210x297mm
+  dpi: 300                      # Print quality
+  margin_mm: 15                 # Safe margin for binding/printing
+
+# ── Free API Providers ───────────────────────────────────
+apis:
+  # OpenRouter — free LLM for creative prompt generation
+  openrouter:
+    base_url: "https://openrouter.ai/api/v1"
+    model: "google/gemma-2-9b-it:free"
+    fallback_models:
+      - "meta-llama/llama-3.1-8b-instruct:free"
+      - "mistralai/mistral-7b-instruct:free"
+      - "qwen/qwen-2-7b-instruct:free"
+    max_tokens: 4096
+    temperature: 0.9
+
+  # Pollinations.ai — free, no API key needed
+  pollinations:
+    base_url: "https://image.pollinations.ai/prompt"
+    model: "flux"               # flux | turbo
+    width: 1024
+    height: 1024
+    enhance: false
+    nologo: true
+    timeout: 120
+
+  # NVIDIA NIM — free tier with API key
+  nvidia:
+    base_url: "https://ai.api.nvidia.com/v1/genai/stabilityai/sdxl"
+    model: "stabilityai/sdxl"
+    width: 1024
+    height: 1024
+    steps: 30
+    cfg_scale: 7
+
+  # Hugging Face Inference — free tier with token
+  huggingface:
+    base_url: "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+    width: 1024
+    height: 1024
+
+# ── Image Generation Pipeline ────────────────────────────
+generation:
+  # Order of image providers (primary → fallback → fallback)
+  provider_priority:
+    - "pollinations"
+    - "nvidia"
+    - "huggingface"
+  max_retries: 3                # Retries per image
+  retry_delay: 5                # Seconds between retries
+  batch_size: 10                # Process in batches (progress logging)
+  concurrent: 2                 # Parallel API calls (avoid rate limits)
+
+# ── Prompt Strategy ──────────────────────────────────────
+prompts:
+  # Negative prompts appended to every page prompt
+  negative_prompt: "color, shading, gradient, photorealistic, 3d, complex, blurry, low quality, watermark, text, letters, words"
+  # Style suffix for coloring pages (black & white line art)
+  page_style_suffix: "clean black and white line art, bold thick outlines, pure white background, simple vector style, kids coloring book page, no shading, no color, high contrast, minimal detail"
+  # Style suffix for cover page
+  cover_style_suffix: "kids coloring book cover illustration, bold black outlines, decorative border frame, white background, line art, no color, kid-friendly, cheerful"
+
+# ── Post-Processing ──────────────────────────────────────
+processing:
+  resize_to_a4: true
+  enhance_contrast: true
+  contrast_factor: 1.5
+  sharpen: true
+  convert_to_grayscale: true
+  # Line art enhancement via OpenCV
+  apply_canny: true
+  canny_threshold1: 50
+  canny_threshold2: 150
+  canny_blur_kernel: 3
+  # Dilate lines for cleaner print
+  dilate_lines: true
+  dilate_kernel_size: 1
+
+# ── Output Paths ─────────────────────────────────────────
+paths:
+  output_raw: "output/raw"           # Downloaded raw images
+  output_processed: "output/processed"  # Post-processed line art
+  output_books: "output/books"       # Final PDFs
+  output_prompts: "output/prompts"   # Saved prompt JSON
+  logs: "logs"
+
+# ── Book Metadata ────────────────────────────────────────
+metadata:
+  author: "AI Coloring Book Agent"
+  publisher: "Daily Kids Coloring"
+  series: "Daily Creative Coloring Series"
+
+# ── Logging ──────────────────────────────────────────────
+logging:
+  level: "INFO"
+  rotation: "7 days"
+  retention: "30 days"

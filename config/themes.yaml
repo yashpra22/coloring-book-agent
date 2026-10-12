@@ -1,0 +1,138 @@
+# ═══════════════════════════════════════════════════════════
+#  Theme Pool for Maximum Variety
+#  Used by Prompt Agent to ensure diverse daily content
+# ═══════════════════════════════════════════════════════════
+
+categories:
+  animals:
+    - "baby elephant playing with balloons"
+    - "sleepy kitten in a basket"
+    - "happy puppy chasing butterflies"
+    - "giraffe eating leaves from tall tree"
+    - "penguin sliding on ice"
+    - "lion cub with a flower crown"
+    - "bunny rabbit munching carrot"
+    - "dolphin jumping over waves"
+    - "owl sitting on a crescent moon"
+    - "turtle swimming in coral reef"
+    - "bear cub catching honey"
+    - "monkey swinging on vines"
+    - "fox sleeping under a mushroom"
+    - "parrot with colorful feathers"
+    - "deer in a magical forest"
+
+  vehicles:
+    - "race car zooming on track"
+    - "fire truck with ladder up"
+    - "rocket ship blasting to space"
+    - "hot air balloon in the sky"
+    - "sailboat on calm ocean"
+    - "train chugging through mountains"
+    - "bicycle with flower basket"
+    - "submarine exploring deep sea"
+    - "helicopter flying over city"
+    - "tractor on a farm"
+    - "school bus with happy kids"
+    - "scooter riding through park"
+
+  fantasy:
+    - "unicorn with rainbow mane"
+    - "fairy with butterfly wings"
+    - "dragon guarding a treasure"
+    - "mermaid sitting on rock"
+    - "wizard casting star spells"
+    - "castle on floating island"
+    - "magic treehouse in enchanted forest"
+    - "phoenix rising from flames"
+    - "friendly monster under the bed"
+    - "elf archer in woodland"
+    - "genie emerging from lamp"
+    - "griffin flying over clouds"
+
+  nature:
+    - "sunflower field at sunset"
+    - "waterfall in tropical jungle"
+    - "cherry blossom tree in spring"
+    - "autumn leaves falling"
+    - "snowman in winter wonderland"
+    - "rainbow after rain"
+    - "mushroom house in forest"
+    - "cactus in desert bloom"
+    - "butterfly garden with flowers"
+    - "treehouse with rope ladder"
+    - "mountain landscape with lake"
+    - "beach with palm trees"
+
+  space:
+    - "astronaut floating in space"
+    - "saturn with its rings"
+    - "rocket landing on the moon"
+    - "alien waving hello"
+    - "space station orbiting earth"
+    - "comet streaking across sky"
+    - "robot exploring Mars"
+    - "constellation of stars"
+    - "planet with colorful surface"
+    - "UFO beaming up a cow"
+
+  food:
+    - "ice cream cone with sprinkles"
+    - "birthday cake with candles"
+    - "pizza with smiley toppings"
+    - "fruit bowl with watermelon"
+    - "cupcake with cherry on top"
+    - "donut with rainbow glaze"
+    - "sushi roll with faces"
+    - "taco with happy expression"
+    - "pancake stack with syrup"
+    - "cookie shaped like star"
+
+  daily_life:
+    - "child reading a book"
+    - "kid playing with toy blocks"
+    - "child riding a bicycle"
+    - "boy flying a kite"
+    - "girl planting flowers"
+    - "child painting with brush"
+    - "kid building sandcastle"
+    - "child feeding ducks at pond"
+    - "boy fishing by the river"
+    - "girl dancing with ribbon"
+    - "child playing soccer"
+    - "kid making a snow angel"
+
+  seasonal:
+    - "christmas tree with presents"
+    - "halloween pumpkin with cat"
+    - "easter eggs in a basket"
+    - "diwali diya with rangoli"
+    - "beach umbrella in summer"
+    - "fall scarecrow in cornfield"
+    - "spring flowers with butterflies"
+    - "winter snowflakes on window"
+    - "valentine hearts and cupid"
+    - "new year fireworks display"
+
+# ── Cover Page Themes ────────────────────────────────────
+cover_themes:
+  - "a magical world full of cute animals and adventures"
+  - "a whimsical fairy tale land with castles and rainbows"
+  - "an exciting space adventure with rockets and aliens"
+  - "a delightful under-the-sea ocean journey"
+  - "a fun jungle safari with wild animals"
+  - "a charming garden full of flowers and butterflies"
+  - "an enchanting winter wonderland with snow"
+  - "a thrilling dinosaur expedition"
+
+# ── Cover Title Templates ────────────────────────────────
+cover_titles:
+  - "My Magical Coloring Book"
+  - "Fun Adventures to Color"
+  - "Creative Kids Coloring"
+  - "Dreamy World Coloring Book"
+  - "Happy Times Coloring Fun"
+  - "Wonderland Coloring Pages"
+  - "Little Artists Coloring Book"
+  - "Super Fun Coloring Time"
+  - "Amazing Kids Coloring World"
+  - "Colorful Dreams Coloring Book"

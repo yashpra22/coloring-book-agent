@@ -1,0 +1,66 @@
+name: Daily Coloring Book Generation
+
+on:
+  schedule:
+    # Runs daily at 6:00 AM UTC (11:30 AM IST)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub UI
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-glx libglib2.0-0
+
+      - name: Install Python dependencies
+        run: pip install -r coloring-book-agent/requirements.txt
+
+      - name: Create .env file
+        working-directory: coloring-book-agent
+        run: |
+          echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" > .env
+          echo "NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}" >> .env
+          echo "HF_TOKEN=${{ secrets.HF_TOKEN }}" >> .env
+
+      - name: Generate Coloring Book
+        working-directory: coloring-book-agent
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python main.py
+
+      - name: Upload PDF as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coloring-book-${{ github.run_number }}
+          path: coloring-book-agent/output/books/*.pdf
+          retention-days: 90
+
+      - name: Commit PDF to repository
+        if: success()
+        run: |
+          git config --local user.email "agent@coloringbook.ai"
+          git config --local user.name "Coloring Book Agent"
+          git add coloring-book-agent/output/books/
+          git add coloring-book-agent/output/prompts/
+          git commit -m "📚 Auto-generated coloring book — $(date +%Y-%m-%d)" || echo "Nothing to commit"
+          git push || echo "Nothing to push"
