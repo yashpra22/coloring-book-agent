@@ -7,7 +7,7 @@ Automated agentic framework that generates a **101-page A4 PDF coloring book** (
 ```
 main.py ──────────────┐
                        ├── agents/prompt_agent.py   (LLM generates creative prompts)
-                       ├── agents/image_agent.py    (Pollinations/NVIDIA/HF generates images)
+                       ├── agents/image_agent.py    (NVIDIA/HF model APIs generate images)
                        ├── agents/process_agent.py  (OpenCV converts to clean line art)
                        └── agents/pdf_agent.py      (fpdf2 assembles A4 PDF)
 ```
@@ -43,9 +43,8 @@ python main.py --pages 20         # Quick 20-page test
 | OpenRouter | LLM prompts | Unlimited free models | https://openrouter.ai/keys |
 | NVIDIA NIM | Image gen | Free tier | https://build.nvidia.com/ |
 | Hugging Face | Image gen | 30k req/month | https://huggingface.co/settings/tokens |
-| Pollinations | Image gen | **No key needed** | Works out of the box |
 
-> **Note:** Without any API keys, the system falls back to template-based prompts and Pollinations for images. It still works but with less variety.
+> **Note:** Image generation now requires either `NVIDIA_API_KEY` or `HF_TOKEN`. Prompt generation can still fall back to templates if OpenRouter is unavailable.
 
 ## Daily Automation
 

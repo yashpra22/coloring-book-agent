@@ -4,6 +4,7 @@ import sys
 import json
 import hashlib
 import logging
+import re
 from pathlib import Path
 from datetime import datetime
 
@@ -43,20 +44,52 @@ def load_themes(themes_path: str = "config/themes.yaml") -> dict:
 
 
 def load_env(env_path: str = ".env") -> dict:
-    """Load environment variables from .env file."""
+    """Load environment variables from .env file and the process environment."""
     env = {}
-    if os.path.exists(env_path):
-        with open(env_path, "r", encoding="utf-8") as f:
+
+    project_root = Path(__file__).resolve().parents[1]
+    env_file = Path(env_path)
+    if not env_file.is_absolute():
+        cwd_env = Path.cwd() / env_file
+        project_env = project_root / env_file
+        env_file = cwd_env if cwd_env.exists() else project_env
+
+    if env_file.exists():
+        with open(env_file, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#") and "=" in line:
                     key, value = line.split("=", 1)
-                    env[key.strip()] = value.strip()
+                    env[key.strip()] = value.strip().strip('"').strip("'")
     # Also check actual environment
-    for key in ["OPENROUTER_API_KEY", "NVIDIA_API_KEY", "HF_TOKEN"]:
+    for key in ["OPENROUTER_API_KEY", "NVIDIA_API_KEY", "HF_TOKEN", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN"]:
         if key in os.environ:
             env[key] = os.environ[key]
     return env
+
+
+def sanitize_for_log(value, secrets=None, max_length: int = 600) -> str:
+    """Return a compact log-safe string with API-token-looking values redacted."""
+    if value is None:
+        return ""
+    text = str(value)
+    for secret in secrets or []:
+        if secret and len(secret) >= 8:
+            text = text.replace(secret, "[REDACTED]")
+
+    patterns = [
+        r"sk-or-v1-[A-Za-z0-9_-]+",
+        r"nvapi-[A-Za-z0-9_-]+",
+        r"hf_[A-Za-z0-9_-]+",
+        r"Bearer\s+[A-Za-z0-9._~+/=-]+",
+    ]
+    for pattern in patterns:
+        text = re.sub(pattern, "[REDACTED]", text)
+
+    text = " ".join(text.split())
+    if len(text) > max_length:
+        return text[:max_length] + "..."
+    return text
 
 
 def ensure_dirs(config: dict) -> None:

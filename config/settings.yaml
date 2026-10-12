@@ -14,44 +14,44 @@ apis:
   # OpenRouter — free LLM for creative prompt generation
   openrouter:
     base_url: "https://openrouter.ai/api/v1"
-    model: "google/gemma-2-9b-it:free"
-    fallback_models:
-      - "meta-llama/llama-3.1-8b-instruct:free"
-      - "mistralai/mistral-7b-instruct:free"
-      - "qwen/qwen-2-7b-instruct:free"
+    model: "openrouter/free"
+    fallback_models: []
     max_tokens: 4096
     temperature: 0.9
 
-  # Pollinations.ai — free, no API key needed
-  pollinations:
-    base_url: "https://image.pollinations.ai/prompt"
-    model: "flux"               # flux | turbo
+  # Cloudflare Workers AI — free tier (10,000 neurons/day), reliable
+  cloudflare:
+    model: "@cf/bytedance/stable-diffusion-xl-lightning"
     width: 1024
     height: 1024
-    enhance: false
-    nologo: true
-    timeout: 120
+    num_steps: 8
+    guidance: 7.5
 
-  # NVIDIA NIM — free tier with API key
+  # NVIDIA NIM — free tier with API key (needs function enabled on account)
   nvidia:
-    base_url: "https://ai.api.nvidia.com/v1/genai/stabilityai/sdxl"
-    model: "stabilityai/sdxl"
+    base_url: "https://ai.api.nvidia.com/v1/genai/stabilityai/stable-diffusion-xl"
+    model: "stabilityai/stable-diffusion-xl"
     width: 1024
     height: 1024
     steps: 30
-    cfg_scale: 7
+    cfg_scale: 5
+    sampler: "K_DPM_2_ANCESTRAL"
 
-  # Hugging Face Inference — free tier with token
+  # Hugging Face Inference Providers — free tier with token
   huggingface:
-    base_url: "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+    base_url: "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
+    model: "black-forest-labs/FLUX.1-schnell"
+    provider: "auto"
     width: 1024
     height: 1024
+    steps: 30
+    guidance_scale: 7.5
 
 # ── Image Generation Pipeline ────────────────────────────
 generation:
   # Order of image providers (primary → fallback → fallback)
   provider_priority:
-    - "pollinations"
+    - "cloudflare"
     - "nvidia"
     - "huggingface"
   max_retries: 3                # Retries per image

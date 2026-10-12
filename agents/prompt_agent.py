@@ -6,7 +6,7 @@ import requests
 from typing import List, Dict, Optional
 
 from loguru import logger
-from .utils import prompt_hash
+from .utils import prompt_hash, sanitize_for_log
 
 
 class PromptAgent:
@@ -34,15 +34,27 @@ class PromptAgent:
             "temperature": self.temperature,
         }
         try:
+            url = self.base_url.rstrip("/") + "/chat/completions"
             resp = requests.post(
-                self.base_url + "/chat/completions",
+                url,
                 headers=headers, json=payload, timeout=60,
             )
-            resp.raise_for_status()
+            if not resp.ok:
+                logger.warning(
+                    "LLM call failed ({}) HTTP {}: {}".format(
+                        model,
+                        resp.status_code,
+                        sanitize_for_log(resp.text, [self.api_key]),
+                    )
+                )
+                return None
             data = resp.json()
             return data["choices"][0]["message"]["content"]
         except Exception as e:
-            logger.warning("LLM call failed ({}): {}".format(model, e))
+            logger.warning("LLM call failed ({}): {}".format(
+                model,
+                sanitize_for_log(e, [self.api_key]),
+            ))
             return None
 
     def _parse_json(self, text):
