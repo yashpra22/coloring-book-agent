@@ -19,6 +19,12 @@ apis:
     max_tokens: 4096
     temperature: 0.9
 
+  # Pollinations.ai — 100% FREE, no key needed (primary)
+  pollinations:
+    model: "flux"
+    width: 1024
+    height: 1024
+
   # Cloudflare Workers AI — free tier (10,000 neurons/day), reliable
   cloudflare:
     model: "@cf/bytedance/stable-diffusion-xl-lightning"
@@ -50,9 +56,10 @@ apis:
 # ── Image Generation Pipeline ────────────────────────────
 generation:
   # Order of image providers (primary → fallback → fallback)
+  # Pollinations (free, no key) → Cloudflare (free 10k neurons/day) → HuggingFace
   provider_priority:
+    - "pollinations"
     - "cloudflare"
-    - "nvidia"
     - "huggingface"
   max_retries: 3                # Retries per image
   retry_delay: 5                # Seconds between retries

@@ -3,7 +3,7 @@ Daily Coloring Book Agent — Main Orchestrator
 
 Pipeline:
 1. Generate creative prompts (LLM or template)
-2. Generate images (Pollinations → NVIDIA → HuggingFace)
+2. Generate images (Pollinations → Cloudflare → HuggingFace)
 3. Process to line art (OpenCV + PIL)
 4. Assemble A4 PDF
 

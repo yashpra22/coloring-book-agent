@@ -211,8 +211,39 @@ class ImageAgent:
                 sanitize_for_log(e, [api_token])))
         return False
 
+    def _generate_pollinations(self, prompt, save_path):
+        """Generate image via Pollinations.ai (FREE, no key needed)."""
+        import urllib.parse
+        cfg = self.providers.get("pollinations", {})
+        model = cfg.get("model", "flux")
+        width = cfg.get("width", 1024)
+        height = cfg.get("height", 1024)
+        seed = int(time.time() * 1000) % 1000000
+        encoded = urllib.parse.quote(prompt[:1500])
+        url = "https://image.pollinations.ai/prompt/{}?width={}&height={}&seed={}&nologo=true&model={}".format(
+            encoded, width, height, seed, model)
+        try:
+            resp = requests.get(url, timeout=180)
+            if not resp.ok:
+                logger.warning("Pollinations failed HTTP {}: {}".format(
+                    resp.status_code, sanitize_for_log(resp.text[:500])))
+                return False
+            ct = resp.headers.get("content-type", "")
+            if "image" not in ct and len(resp.content) < 1000:
+                logger.warning("Pollinations returned non-image: {}".format(
+                    sanitize_for_log(resp.text[:500])))
+                return False
+            Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+            with open(save_path, "wb") as f:
+                f.write(resp.content)
+            return os.path.getsize(save_path) > 1000
+        except Exception as e:
+            logger.warning("Pollinations generation failed: {}".format(e))
+            return False
+
     def _get_provider_func(self, name):
         return {
+            "pollinations": self._generate_pollinations,
             "cloudflare": self._generate_cloudflare,
             "nvidia": self._generate_nvidia,
             "huggingface": self._generate_huggingface,
