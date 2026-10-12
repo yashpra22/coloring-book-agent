@@ -3,7 +3,6 @@ import json
 import random
 import time
 import requests
-from typing import List, Dict, Optional
 
 from loguru import logger
 from .utils import prompt_hash, sanitize_for_log
@@ -57,25 +56,23 @@ class PromptAgent:
             ))
             return None
 
+    def _extract_json_text(self, text):
+        text = text.strip()
+        if "```json" in text:
+            text = text.split("```json")[1].split("```")[0]
+        elif "```" in text:
+            text = text.split("```")[1].split("```")[0]
+        return text.strip()
+
     def _parse_json(self, text):
         try:
-            text = text.strip()
-            if "```json" in text:
-                text = text.split("```json")[1].split("```")[0]
-            elif "```" in text:
-                text = text.split("```")[1].split("```")[0]
-            return json.loads(text.strip())
+            return json.loads(self._extract_json_text(text))
         except Exception:
             return None
 
     def _parse_json_list(self, text, expected):
         try:
-            text = text.strip()
-            if "```json" in text:
-                text = text.split("```json")[1].split("```")[0]
-            elif "```" in text:
-                text = text.split("```")[1].split("```")[0]
-            data = json.loads(text.strip())
+            data = json.loads(self._extract_json_text(text))
             if isinstance(data, list) and len(data) >= expected * 0.5:
                 while len(data) < expected:
                     data.append(data[len(data) % len(data)])

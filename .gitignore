@@ -16,6 +16,9 @@ output/raw/
 output/processed/
 output/books/*.pdf
 output/prompts/
+ab_test/
+ab_test_*.py
+test_*.py
 
 # Logs
 logs/
@@ -30,3 +33,4 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+output/review/

@@ -3,7 +3,6 @@ import os
 import sys
 import json
 import hashlib
-import logging
 import re
 from pathlib import Path
 from datetime import datetime
@@ -104,11 +103,6 @@ def get_date_str() -> str:
     return datetime.now().strftime("%Y-%m-%d")
 
 
-def get_timestamp() -> str:
-    """Get current timestamp for unique filenames."""
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
-
-
 def prompt_hash(prompt: str) -> str:
     """Generate a short hash for a prompt (for caching)."""
     return hashlib.md5(prompt.encode()).hexdigest()[:12]
@@ -119,9 +113,3 @@ def save_json(data, filepath: str) -> None:
     Path(filepath).parent.mkdir(parents=True, exist_ok=True)
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-
-
-def load_json(filepath: str):
-    """Load JSON data."""
-    with open(filepath, "r", encoding="utf-8") as f:
-        return json.load(f)

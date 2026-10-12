@@ -49,14 +49,21 @@ class ProcessAgent:
         return cv2.bitwise_not(dilated)
 
     def _resize_to_a4(self, img):
-        content_w = self.a4_width - (2 * self.margin_px)
-        content_h = self.a4_height - (2 * self.margin_px)
-        img.thumbnail((content_w, content_h), Image.LANCZOS)
-        canvas = Image.new("L", (self.a4_width, self.a4_height), 255)
-        x = (self.a4_width - img.width) // 2
-        y = (self.a4_height - img.height) // 2
-        canvas.paste(img, (x, y))
-        return canvas
+        # FULL-BLEED A4: cover-fit crop (no letterbox bars) so the image
+        # covers the whole page edge-to-edge, exactly like the PDF prints it.
+        target_ratio = self.a4_width / self.a4_height
+        w, h = img.size
+        src_ratio = w / h
+        if src_ratio > target_ratio:
+            new_w = int(h * target_ratio)
+            left = (w - new_w) // 2
+            img = img.crop((left, 0, left + new_w, h))
+        else:
+            new_h = int(w / target_ratio)
+            top = (h - new_h) // 2
+            img = img.crop((0, top, w, top + new_h))
+        img = img.resize((self.a4_width, self.a4_height), Image.LANCZOS)
+        return img
 
 
     def process_image(self, input_path, output_path):
