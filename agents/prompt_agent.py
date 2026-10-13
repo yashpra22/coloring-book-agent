@@ -89,7 +89,12 @@ class PromptAgent:
         system_prompt = (
             "You are a creative children's coloring book designer. "
             "You generate unique, diverse, kid-friendly coloring page descriptions. "
-            "Each description should be a vivid scene for a black-and-white line art coloring page."
+            "IMPORTANT RULES for each description: keep scenes VERY SIMPLE - "
+            "only 1-2 large subjects per page, make subjects big and prominent, "
+            "mention minimal or no background details, keep props to a maximum of 3. "
+            "Describe cute kawaii characters with big eyes and happy expressions. "
+            "The description is for thick-outlined black-and-white line art that a "
+            "young child colors easily with big crayons."
         )
 
         cover_themes = ", ".join(random.sample(
@@ -198,6 +203,12 @@ class PromptAgent:
         style = self.config["prompts"]["cover_style_suffix"]
         return scene + ', with the title "' + title + '" in bold decorative letters at the top, ' + style
 
+    def _build_cover_color_prompt(self, scene):
+        """Full-color cover art — NO text in the prompt; ProcessAgent overlays
+        the title with PIL because FLUX-schnell mangles rendered text."""
+        style = self.config["prompts"].get("cover_color_style_suffix", "")
+        return scene + ", " + style if style else scene
+
     def generate(self):
         num_pages = self.config["book"]["pages"]
         logger.info("Generating prompts for {} pages + 1 cover...".format(num_pages))
@@ -213,6 +224,9 @@ class PromptAgent:
                 "scene": cover.get("scene", "A magical coloring scene"),
                 "image_prompt": self._build_cover_prompt(
                     cover.get("title", "My Coloring Book"),
+                    cover.get("scene", "A magical coloring scene"),
+                ),
+                "color_image_prompt": self._build_cover_color_prompt(
                     cover.get("scene", "A magical coloring scene"),
                 ),
                 "hash": prompt_hash(cover.get("scene", "")),

@@ -17,14 +17,20 @@ class PDFAgent:
         pdf.set_text_color(150, 150, 150)
         pdf.cell(0, 10, "Page {} of {}".format(page_num, total), align="C")
 
-    def build_pdf(self, processed_paths, cover_title, date_str):
+    def build_pdf(self, processed_paths, cover_title, date_str, color_cover_path=None):
         valid_paths = [p for p in processed_paths if p is not None]
         if not valid_paths:
             logger.error("No valid images to build PDF")
             return None
 
-        cover_path = valid_paths[0]
-        page_paths = valid_paths[1:]
+        # Color cover available ho to wo PDF ka page-1 banta hai aur line-art
+        # cover bonus coloring page ke roop me andar rehta hai.
+        if color_cover_path and os.path.exists(color_cover_path):
+            cover_path = color_cover_path
+            page_paths = valid_paths
+        else:
+            cover_path = valid_paths[0]
+            page_paths = valid_paths[1:]
         total_pages = len(page_paths) + 1
 
         logger.info("Building PDF with {} pages...".format(total_pages))

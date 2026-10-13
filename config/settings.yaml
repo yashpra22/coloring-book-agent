@@ -42,7 +42,7 @@ apis:
   # `model_params` maps each model to the fields image_agent is allowed to send.
   cloudflare:
     model: "@cf/black-forest-labs/flux-1-schnell"
-    steps: 4
+    steps: 8
     max_prompt_chars: 2047        # FLUX prompt maxLength is 2048
     model_params:
       "@cf/black-forest-labs/flux-1-schnell":
@@ -85,12 +85,11 @@ apis:
 # ── Image Generation Pipeline ────────────────────────────
 generation:
   # Order of image providers (primary → fallbacks)
-  # CURRENTLY: only Cloudflare is active.
-  # Pollinations / NVIDIA / HuggingFace code + config are KEPT for future
-  # (uncomment to re-enable as fallback if they offer a good image model).
+  # Cloudflare primary (best quality); Pollinations = free no-key fallback
+  # jo Cloudflare ke daily neurons khatam hone par catch karta hai.
   provider_priority:
     - "cloudflare"
-    # - "pollinations"
+    - "pollinations"
     # - "nvidia"
     # - "huggingface"
   max_retries: 3                # Retries per image
@@ -103,12 +102,17 @@ generation:
 prompts:
   # Negative prompts appended to every page prompt
   negative_prompt: "color, colours, colored, shading, shadow, gradient, stipple dots, stippling, noise, texture, fur detail, crosshatching, hatching, heavy black fills, photorealistic, photo, 3d render, cgi, painting, watercolor, sketchy, pencil sketch, messy lines, broken lines, thin lines, faint lines, blurry, low quality, watermark, text, letters, words, signature, grey fill, grey wash, dark background"
-  # Style suffix for coloring pages (Round-4 winner: full-bleed story scene).
+  # Style suffix for coloring pages (Round-5: tuned to match ChatGPT reference —
+  # VERY thick outlines, simple composition, large closed colorable regions).
   # FLUX renders 1024x1024 and the A4 crop trims the sides, so the prompt asks
   # for a tall portrait composition that survives centre-cropping.
-  page_style_suffix: "vertical portrait full-bleed children's coloring book page, fills entire page edge to edge, professional kawaii illustration, smooth clean thick uniform black outlines, simple flat shapes, no texture no fur no stippling, 3-4 cute characters interacting, many simple colorable props, every shape EMPTY WHITE INSIDE with white fill, no solid black areas, no shading, no crosshatching, no gradients, no grey tones, no color, pure white paper background"
+  page_style_suffix: "children's coloring book page, extremely thick bold uniform black outlines at least 8 pixels wide, very simple minimal composition with only 2 large subjects, each subject drawn HUGE filling most of the page, large simple closed shapes that are easy to color, cute kawaii chibi characters with big round eyes and happy smiles, clean smooth unbroken outlines, generous empty white space between elements, every shape EMPTY WHITE INSIDE with white fill, no background details, plain white background, flat 2D cartoon, no shading, no texture, no fur, no stippling, no crosshatching, no gradients, no grey tones, no color, no solid black areas"
   # Style suffix for cover page
   cover_style_suffix: "vertical portrait children's coloring book cover, simple bold black line art on pure white background, thick uniform outlines, one large centered illustration, decorative rectangular border frame, minimal background shapes, large open white areas to color, every shape EMPTY WHITE INSIDE, flat 2D cartoon, no shading, no stippling, no gradients, no grey tones, no color, kid-friendly, cheerful"
+  # Full-COLOR cover style (ChatGPT-reference look): vibrant colour art, NO text —
+  # the title/subtitle are overlaid by ProcessAgent with PIL because
+  # FLUX-schnell cannot render text reliably.
+  cover_color_style_suffix: "vibrant colorful children's picture book cover illustration, flat 2D kawaii cartoon style, bright saturated cheerful colors, soft pastel sky background with fluffy clouds, several cute chubby animal characters with big sparkly eyes grouped together smiling and waving, simple rounded shapes, clean vector-like storybook art, full color, rich detail, no text, no letters, no words, no watermark"
 
 # ── Post-Processing ──────────────────────────────────────
 # Round-4 winning recipe for FLUX-schnell output (see output/review4/):
@@ -129,9 +133,25 @@ processing:
   # Adaptive threshold (older SDXL path) — only used if threshold_mode: adaptive
   threshold_block_size: 71
   threshold_c: 10
-  # Optional: patli lines moti karne ke liye (default OFF)
-  dilate_lines: false
+  # Optional: patli lines moti karne ke liye — ON to match the thick-outline
+  # ChatGPT reference style (thin FLUX lines get expanded by this kernel).
+  dilate_lines: true
   dilate_kernel_size: 2
+
+# ── Color Cover Overlay ──────────────────────────────────
+# Title text PIL se draw hota hai (FLUX text render nahi kar sakta).
+# Fonts Windows-standard hain; title reference jaisa warm orange + white outline.
+cover:
+  subtitle: "COLORING BOOK"
+  title_font: "C:/Windows/Fonts/comicbd.ttf"    # Comic Sans MS Bold
+  subtitle_font: "C:/Windows/Fonts/arialbd.ttf" # Arial Bold
+  title_fill: [255, 140, 30]                    # warm orange (reference jaisa)
+  title_stroke: [255, 255, 255]                 # white outline
+  subtitle_fill: [255, 255, 255]
+  subtitle_bg: [66, 133, 244]                   # blue ribbon
+  title_band_ratio: 0.24                        # top % of page for the title
+  saturation: 1.15                              # colour boost
+  contrast: 1.05
 
 # ── Output Paths ─────────────────────────────────────────
 paths:

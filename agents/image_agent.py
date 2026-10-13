@@ -300,6 +300,17 @@ class ImageAgent:
             logger.error("Failed to generate cover image")
             return []
 
+        # Full-COLOR cover (ChatGPT-reference look). Optional: agar fail ho
+        # jaye to line-art cover hi PDF cover ban jaata hai.
+        color_prompt = cover.get("color_image_prompt")
+        if color_prompt:
+            color_path = os.path.join(self.raw_dir, "cover_color.png")
+            logger.info("Generating COLOR cover image...")
+            if self.generate_single(color_prompt, color_path, 1, total):
+                saved_paths.append(color_path)
+            else:
+                logger.warning("Color cover failed — line-art cover will be used")
+
         for i, page in enumerate(prompts["pages"]):
             page_num = page["page_number"]
             page_path = os.path.join(self.raw_dir, "page_{:03d}.png".format(page_num))

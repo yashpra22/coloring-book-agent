@@ -93,6 +93,24 @@ def main():
         logger.error("No images processed. Aborting.")
         sys.exit(1)
 
+    # ── Phase 3b: Color Cover (ChatGPT-reference look) ──
+    color_cover_path = None
+    raw_color = os.path.join(config["paths"]["output_raw"], "cover_color.png")
+    if os.path.exists(raw_color):
+        logger.info("─── Phase 3b: Building Color Cover ───")
+        color_out = os.path.join(config["paths"]["output_processed"], "cover_color.png")
+        if process_agent.process_cover(
+            raw_color,
+            color_out,
+            prompts["cover"]["title"],
+            config.get("cover", {}).get("subtitle", "Coloring Book"),
+        ):
+            color_cover_path = color_out
+            # raw line-art list se hatao taaki duplicate na bane
+            processed_paths = [p for p in processed_paths if p != raw_color]
+    else:
+        logger.info("No color cover generated — line-art cover will be used")
+
     # ── Phase 4: Build PDF ──
     logger.info("─── Phase 4: Building PDF ───")
     pdf_agent = PDFAgent(config)
@@ -100,6 +118,7 @@ def main():
         processed_paths,
         prompts["cover"]["title"],
         date_str,
+        color_cover_path=color_cover_path,
     )
 
     # ── Summary ──
