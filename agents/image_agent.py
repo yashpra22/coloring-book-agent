@@ -142,6 +142,35 @@ class ImageAgent:
             ))
         return False
 
+    def _cloudflare_payload(self, cfg, model, prompt):
+        """Build a Cloudflare request body containing ONLY fields the model accepts.
+
+        Cloudflare validates the JSON schema strictly and returns HTTP 400
+        ("Additional or unevaluated properties ... not allowed") for anything
+        the model does not support. So flux-1-schnell must be sent nothing but
+        {prompt, steps} — no negative_prompt, no height/width, no guidance, no seed.
+        """
+        allowed = (cfg.get("model_params") or {}).get(model)
+        if not allowed:
+            # Unknown model: fall back to the permissive SDXL-Lightning schema.
+            logger.debug("No model_params for {} - using SDXL-Lightning schema".format(model))
+            allowed = [
+                "prompt", "negative_prompt", "height", "width",
+                "num_steps", "guidance", "seed",
+            ]
+
+        candidates = {
+            "prompt": prompt,
+            "steps": cfg.get("steps", 4),
+            "negative_prompt": self.config["prompts"]["negative_prompt"],
+            "height": cfg.get("height", 1024),
+            "width": cfg.get("width", 1024),
+            "num_steps": cfg.get("num_steps", 8),
+            "guidance": cfg.get("guidance", 3.5),
+            "seed": int(time.time() * 1000) % 1000000,
+        }
+        return {key: value for key, value in candidates.items() if key in allowed}
+
     def _generate_cloudflare(self, prompt, save_path):
         """Generate image via Cloudflare Workers AI (free tier: 10k neurons/day)."""
         account_id = self.env.get("CLOUDFLARE_ACCOUNT_ID", "")
@@ -150,28 +179,28 @@ class ImageAgent:
             logger.warning("CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_API_TOKEN missing")
             return False
         cfg = self.providers["cloudflare"]
-        model = cfg.get("model", "@cf/bytedance/stable-diffusion-xl-lightning")
+        model = cfg.get("model", "@cf/black-forest-labs/flux-1-schnell")
+
+        # FLUX enforces prompt maxLength 2048; silently clipping avoids a hard 400.
+        max_chars = int(cfg.get("max_prompt_chars", 0) or 0)
+        if max_chars and len(prompt) > max_chars:
+            logger.debug("Prompt truncated {} -> {} chars for {}".format(
+                len(prompt), max_chars, model))
+            prompt = prompt[:max_chars]
+
         url = "https://api.cloudflare.com/client/v4/accounts/{}/ai/run/{}".format(account_id, model)
         headers = {
             "Authorization": "Bearer " + api_token,
             "Content-Type": "application/json",
         }
-        payload = {
-            "prompt": prompt,
-            "negative_prompt": self.config["prompts"]["negative_prompt"],
-            "height": cfg.get("height", 1024),
-            "width": cfg.get("width", 1024),
-            "num_steps": cfg.get("num_steps", 8),
-            "guidance": cfg.get("guidance", 3.5),
-            "seed": int(time.time() * 1000) % 1000000,
-        }
+        payload = self._cloudflare_payload(cfg, model, prompt)
         try:
-            resp = requests.post(url, headers=headers, json=payload, timeout=120)
+            resp = requests.post(url, headers=headers, json=payload, timeout=300)
             if not resp.ok:
                 logger.warning("Cloudflare generation failed HTTP {}: {}".format(
                     resp.status_code, sanitize_for_log(resp.text, [api_token])))
                 return False
-            # Cloudflare SDXL returns raw image bytes (Content-Type: image/*)
+            # Some models stream raw image bytes (Content-Type: image/*)
             ct = resp.headers.get("content-type", "")
             if ct.startswith("image"):
                 Path(save_path).parent.mkdir(parents=True, exist_ok=True)

@@ -37,6 +37,47 @@ class ProcessAgent:
             cv2.THRESH_BINARY, block, c_val,
         )
 
+    def _threshold_global(self, img_array):
+        """Single global binary threshold — the Round-4 recipe.
+
+        Everything lighter than `threshold_value` becomes pure white, so the
+        soft grey wash / shading FLUX leaves behind disappears instead of being
+        preserved the way adaptive threshold does.
+        """
+        value = int(self.proc_config.get("threshold_value", 200))
+        _, bw = cv2.threshold(img_array, value, 255, cv2.THRESH_BINARY)
+        return bw
+
+    def _remove_speckles(self, img_array):
+        """Delete tiny isolated black blobs (stipple dots, dither noise).
+
+        Thresholding turns scattered grey pixels into 1-2px black islands that
+        print as dirt. Any connected black component smaller than
+        `speckle_min_area` is filled back to white. Real outlines are always
+        much larger, so line detail survives.
+        """
+        min_area = int(self.proc_config.get("speckle_min_area", 12))
+        if min_area <= 0:
+            return img_array
+        black = (img_array == 0).astype(np.uint8)
+        count, labels, stats, _ = cv2.connectedComponentsWithStats(black, connectivity=8)
+        out = img_array.copy()
+        for label in range(1, count):
+            if stats[label, cv2.CC_STAT_AREA] < min_area:
+                out[labels == label] = 255
+        return out
+
+    def _clean(self, img_array):
+        """Apply whichever threshold mode the config selects, then de-speckle."""
+        mode = self.proc_config.get("threshold_mode", "global")
+        if mode == "adaptive":
+            processed = self._threshold(img_array)
+        else:
+            processed = self._threshold_global(img_array)
+        if self.proc_config.get("speckle_removal", True):
+            processed = self._remove_speckles(processed)
+        return processed
+
     def _dilate_lines(self, img_array):
         if not self.proc_config["dilate_lines"]:
             return img_array
@@ -75,7 +116,7 @@ class ProcessAgent:
             cfg = self.proc_config
 
             if cfg.get("clean_background", False):
-                processed = self._threshold(img_array)
+                processed = self._clean(img_array)
                 if cfg.get("dilate_lines", False):
                     processed = self._dilate_lines(processed)
                 line_art = Image.fromarray(processed)
